@@ -12,10 +12,10 @@ public class GreetingResourceTest {
     @Test
     public void testHelloEndpoint() {
         given()
-          .when().get("/hello-resteasy")
+          .when().get("/camel/v1/cache/test/10")
           .then()
              .statusCode(200)
-             .body(is("Hello RESTEasy"));
+             .body(is("[]"));
     }
 
 }
