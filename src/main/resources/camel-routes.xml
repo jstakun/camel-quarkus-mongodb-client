@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes id="DBClient" xmlns="http://camel.apache.org/schema/spring">
+    <route id="Put to cache">
+        <from uri="direct:putToCache"/>
+        <log loggingLevel="INFO" message="Inserting to collection ${header.cid} 1 document..."/>
+        <convertBodyTo type="java.lang.String"/>
+        <to uri="direct:insertRecord"/>
+        <log loggingLevel="INFO" message="Done"/>
+        <setBody>
+            <simple>{"count": 1}</simple>
+        </setBody>
+        <removeHeaders pattern="*"/>
+    </route>
+    <route id="Insert record to collection">
+        <from uri="direct:insertRecord"/>
+        <recipientList>
+            <simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=save</simple>
+        </recipientList>
+        <log loggingLevel="INFO" message="Inserted to collection ${header.cid} document with id ${header.CamelMongoOid}."/>
+    </route>
+    <route id="Get from cache">
+        <from uri="direct:getFromCache"/>
+        <validate>
+            <simple>${header.limit} range '1..{{batchLimit}}'</simple>
+        </validate>
+        <log loggingLevel="INFO" message="Get all from cache ${header.cid} with limit ${header.limit}"/>
+        <setHeader name="CamelMongoDbSortBy">
+            <!--  descending by _id -->
+            <constant>{"_id" : -1}</constant>
+        </setHeader>
+        <setHeader name="CamelMongoDbLimit">
+            <simple>${header.limit}</simple>
+        </setHeader>
+        <setHeader name="CamelMongoDbBatchSize">
+            <constant>{{batchLimit}}</constant>
+        </setHeader>
+        <recipientList>
+            <simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findAll</simple>
+        </recipientList>
+        <to uri="direct:processOutput"/>
+    </route>
+    <route id="Process output">
+        <from uri="direct:processOutput"/>
+        <marshal>
+            <json id="json" library="Jackson"/>
+        </marshal>
+        <removeHeaders pattern="*"/>
+    </route>
+    <route id="Log error">
+        <from uri="direct:logError"/>
+        <log logName="net.gmsworld.server.camel" loggingLevel="ERROR" message="Operation failed with exception: ${exception.stacktrace}"/>
+        <setBody>
+            <simple>{"error" : "Operation failed"}</simple>
+        </setBody>
+        <removeHeaders pattern="*"/>
+        <setHeader name="CamelHttpResponseCode">
+            <constant>500</constant>
+        </setHeader>
+    </route>
+</routes>
