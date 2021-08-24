@@ -39,6 +39,20 @@
         </recipientList>
         <to uri="direct:processOutput"/>
     </route>
+    <route id="Delete from cache">
+        <from uri="direct:deleteFromCache"/>
+        <log loggingLevel="INFO" message="Delete from collection ${header.cid} objects matching ${header.property} : ${header.value}"/>
+        <setBody>
+            <simple>{"${header.property}" : "${header.value}"}</simple>
+        </setBody>
+        <recipientList>
+            <simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=remove</simple>
+        </recipientList>
+        <setBody>
+            <simple>{"count": ${header.CamelMongoDbRecordsAffected}}</simple>
+        </setBody>
+        <removeHeaders pattern="*"/>
+    </route>
     <route id="Process output">
         <from uri="direct:processOutput"/>
         <marshal>

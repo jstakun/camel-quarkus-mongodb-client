@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rests xmlns="http://camel.apache.org/schema/spring">
     <rest id="cache" path="/camel">
-         <post id="putToCache" consumes="application/json" uri="/v1/cache/{cid}">
+        <post consumes="application/json" id="putToCache" uri="/v1/cache/{cid}">
             <route>
                 <doTry>
                     <to uri="direct:putToCache"/>
@@ -11,8 +11,8 @@
                     </doCatch>
                 </doTry>
             </route>
-         </post>
-         <get id="getFromCache" produces="application/json" uri="/v1/cache/{cid}/{limit}">
+        </post>
+        <get id="getFromCache" produces="application/json" uri="/v1/cache/{cid}/{limit}">
             <route>
                 <doTry>
                     <to uri="direct:getFromCache"/>
@@ -23,5 +23,16 @@
                 </doTry>
             </route>
         </get>
+        <delete id="deleteFromCache" uri="/v1/cache/{cid}/{property}/{value}">
+            <route>
+                <doTry>
+                    <to uri="direct:deleteFromCache"/>
+                    <doCatch>
+                        <exception>java.lang.Exception</exception>
+                        <to uri="direct:logError"/>
+                    </doCatch>
+                </doTry>
+            </route>
+        </delete>
     </rest>
 </rests>
