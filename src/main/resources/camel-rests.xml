@@ -23,6 +23,28 @@
                 </doTry>
             </route>
         </get>
+        <post id="getByQueryFromCache" consumes="text/plain" produces="application/json" uri="/v1/cache/{cid}/{limit}">
+            <route>
+                <doTry>
+                    <to uri="direct:getByQueryFromCache"/>
+                    <doCatch>
+                        <exception>java.lang.Exception</exception>
+                        <to uri="direct:logError"/>
+                    </doCatch>
+                </doTry>
+            </route>
+        </post>
+        <get id="getDbStats" produces="application/json" uri="/v1/cache/stats">
+            <route>
+                <doTry>
+                    <to uri="direct:getDbStats"/>
+                    <doCatch>
+                        <exception>java.lang.Exception</exception>
+                        <to uri="direct:logError"/>
+                    </doCatch>
+                </doTry>
+            </route>
+        </get> 
         <delete id="deleteFromCache" uri="/v1/cache/{cid}/{property}/{value}">
             <route>
                 <doTry>
