@@ -52,11 +52,8 @@
             <simple>${header.limit}</simple>
         </setHeader>
         <setHeader name="CamelMongoDbCriteria">
-            <simple>${body}</simple> 
-       </setHeader>
-        <setBody>
-        	<constant></constant>
-        </setBody>
+            <simple>{${body}}</simple>
+        </setHeader>
         <log loggingLevel="INFO" message="Get from cache by ${body} with limit ${header.limit}"/>
         <recipientList>
             <simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findAll</simple>
@@ -65,9 +62,9 @@
     </route>
     <route id="Get db stats">
         <from uri="direct:getDbStats"/>
-	    <to uri="mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;operation=getDbStats" />
+        <to uri="mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;operation=getDbStats"/>
         <to uri="direct:processOutput"/>
-    </route> 
+    </route>
     <route id="Delete from cache">
         <from uri="direct:deleteFromCache"/>
         <log loggingLevel="INFO" message="Delete from collection ${header.cid} objects matching ${header.property}: ${header.value}"/>
