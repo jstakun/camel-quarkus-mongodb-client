@@ -1,60 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rests xmlns="http://camel.apache.org/schema/spring">
+<rests xmlns="http://camel.apache.org/schema/spring"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://camel.apache.org/schema/spring https://camel.apache.org/schema/spring/camel-spring-3.16.0.xsd">
     <rest id="cache" path="/camel">
-        <post consumes="application/json" id="putToCache" uri="/v1/cache/{cid}">
-            <route>
-                <doTry>
-                    <to uri="direct:putToCache"/>
-                    <doCatch>
-                        <exception>java.lang.Exception</exception>
-                        <to uri="direct:logError"/>
-                    </doCatch>
-                </doTry>
-            </route>
+        <post consumes="application/json" id="putToCache" path="/v1/cache/{cid}">
+            <to uri="direct:putToCache"/>
         </post>
-        <get id="getFromCache" produces="application/json" uri="/v1/cache/{cid}/{limit}">
-            <route>
-                <doTry>
-                    <to uri="direct:getFromCache"/>
-                    <doCatch>
-                        <exception>java.lang.Exception</exception>
-                        <to uri="direct:logError"/>
-                    </doCatch>
-                </doTry>
-            </route>
+        <get id="getFromCache" produces="application/json" path="/v1/cache/{cid}/{limit}">
+            <to uri="direct:getFromCache"/>
         </get>
-        <post id="getByQueryFromCache" consumes="text/plain" produces="application/json" uri="/v1/cache/{cid}/{limit}">
-            <route>
-                <doTry>
-                    <to uri="direct:getByQueryFromCache"/>
-                    <doCatch>
-                        <exception>java.lang.Exception</exception>
-                        <to uri="direct:logError"/>
-                    </doCatch>
-                </doTry>
-            </route>
+        <post id="getByQueryFromCache" consumes="text/plain" produces="application/json" path="/v1/cache/{cid}/{limit}">
+            <to uri="direct:getByQueryFromCache"/>
         </post>
-        <get id="getDbStats" produces="application/json" uri="/v1/cache/stats">
-            <route>
-                <doTry>
-                    <to uri="direct:getDbStats"/>
-                    <doCatch>
-                        <exception>java.lang.Exception</exception>
-                        <to uri="direct:logError"/>
-                    </doCatch>
-                </doTry>
-            </route>
+        <get id="getDbStats" produces="application/json" path="/v1/cache/stats">
+            <to uri="direct:getDbStats"/>
         </get> 
-        <delete id="deleteFromCache" uri="/v1/cache/{cid}/{property}/{value}">
-            <route>
-                <doTry>
-                    <to uri="direct:deleteFromCache"/>
-                    <doCatch>
-                        <exception>java.lang.Exception</exception>
-                        <to uri="direct:logError"/>
-                    </doCatch>
-                </doTry>
-            </route>
+        <delete id="deleteFromCache" path="/v1/cache/{cid}/{property}/{value}">
+            <to uri="direct:deleteFromCache"/>
         </delete>
-    </rest>
+     </rest> 
 </rests>
