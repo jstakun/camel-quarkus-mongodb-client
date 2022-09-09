@@ -1,6 +1,6 @@
 FROM quay.io/jstakun/ubi-micro-quarkus:latest
 MAINTAINER Jaroslaw Stakun jstakun@redhat.com
-LABEL quarkus-version=2.7.5.Final
+LABEL quarkus-version=2.12.1.Final
 COPY ./target/*-runner /application
 RUN chgrp 0 /application && chmod 110 /application
 USER 1001
