@@ -9,7 +9,7 @@
         	<to uri="direct:insertRecord"/>
         	<log loggingLevel="INFO" message="Done"/>
         	<setBody>
-            	<simple>{"count": 1}</simple>
+            	<simple>{"id": "${header.CamelMongoOid}"}</simple>
         	</setBody>
         	<removeHeaders pattern="*"/>
         	<doCatch>
@@ -23,7 +23,7 @@
         <recipientList>
             <simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=save</simple>
         </recipientList>
-        <log loggingLevel="INFO" message="Inserted to collection ${header.cid} document with id ${header.CamelMongoOid}."/>
+        <log loggingLevel="INFO" message="Inserted to collection ${header.cid} document with id ${header.CamelMongoOid}"/>
     </route>
     <route id="Get from cache">
         <from uri="direct:getFromCache"/>
@@ -52,6 +52,24 @@
             </doCatch>
         </doTry>
     </route>
+    <route id="Get from cache by id">
+        <from uri="direct:getFromCacheById"/>
+        <doTry>
+        	<log loggingLevel="INFO" message="Get from cache ${header.cid} document with id ${header.oid}"/>
+        	<setBody>
+        		<simple>${header.oid}</simple>
+        	</setBody>
+        	<convertBodyTo type="org.bson.types.ObjectId"/> 	
+        	<recipientList>
+            	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findById</simple>
+        	</recipientList>
+        	<to uri="direct:processOutput"/>
+	        <doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>
+    </route>
     <route id="Get by query from cache">
         <from uri="direct:getByQueryFromCache"/>
         <doTry>
@@ -65,14 +83,31 @@
             	<simple>${header.limit}</simple>
         	</setHeader>
         	<setHeader name="CamelMongoDbCriteria">
-            	<simple>{${body}}</simple>
+            	<simple>${body}</simple>
         	</setHeader>
-        	<log loggingLevel="INFO" message="Get from cache by ${body} with limit ${header.limit}"/>
+        	<log loggingLevel="INFO" message="Get from cache ${header.cid} by ${body} with limit ${header.limit}"/>
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findAll</simple>
         	</recipientList>
+        	<log loggingLevel="INFO" message="Done"/>
         	<to uri="direct:processOutput"/>
-           <doCatch>
+            <doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry> 	
+    </route>
+    <route id="Aggregate from cache">
+        <from uri="direct:aggregateFromCache"/>
+        <doTry>
+        	<log loggingLevel="INFO" message="Aggregate from cache ${header.cid} by ${body}"/>
+       	    <convertBodyTo type="java.lang.String"/>
+        	<recipientList>
+            	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=aggregate</simple>
+        	</recipientList>
+        	<log loggingLevel="INFO" message="Done"/>
+        	<to uri="direct:processOutput"/>
+            <doCatch>
             	 <exception>java.lang.Exception</exception>
                  <to uri="direct:logError"/>
             </doCatch>
@@ -111,7 +146,7 @@
     </route>
     <route id="Log error">
         <from uri="direct:logError"/>
-        <log logName="net.gmsworld.server.camel" loggingLevel="ERROR" message="Operation failed with exception: ${exception.stacktrace}"/>
+        <log loggingLevel="ERROR" message="Operation failed with exception: ${exception.stacktrace}"/>
         <setBody>
             <simple>{"error" : "Operation failed"}</simple>
         </setBody>
@@ -123,7 +158,7 @@
     <route id="Process output">
         <from uri="direct:processOutput"/>
         <marshal>
-            <json id="json" library="Jackson"/>
+            <json id="json-po" library="Jackson"/>
         </marshal>
         <choice> 
         	<when>

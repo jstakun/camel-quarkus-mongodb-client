@@ -1,21 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rests xmlns="http://camel.apache.org/schema/spring"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://camel.apache.org/schema/spring https://camel.apache.org/schema/spring/camel-spring-3.18.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://camel.apache.org/schema/spring https://camel.apache.org/schema/spring/camel-spring-3.18.0.xsd">
     <rest id="cache" path="/camel">
         <post consumes="application/json" id="putToCache" path="/v1/cache/{cid}">
             <to uri="direct:putToCache"/>
         </post>
-        <get id="getFromCache" produces="application/json" path="/v1/cache/{cid}/{limit}">
+        <get id="getFromCache" path="/v1/cache/{cid}/{limit}" produces="application/json">
             <to uri="direct:getFromCache"/>
         </get>
-        <post id="getByQueryFromCache" consumes="text/plain" produces="application/json" path="/v1/cache/{cid}/{limit}">
+        <get id="getFromCache" path="/v1/cache/{cid}/id/{oid}" produces="application/json">
+            <to uri="direct:getFromCacheById"/>
+        </get>
+        <post consumes="application/json" id="aggregateFromCache" path="/v1/aggregate/cache/{cid}" produces="application/json">
+            <to uri="direct:aggregateFromCache"/>
+        </post>
+        <post consumes="application/json" id="getByQueryFromCache" path="/v1/cache/{cid}/{limit}" produces="application/json">
             <to uri="direct:getByQueryFromCache"/>
         </post>
-        <get id="getDbStats" produces="application/json" path="/v1/cache/stats">
+        <get id="getDbStats" path="/v1/cache/stats" produces="application/json">
             <to uri="direct:getDbStats"/>
-        </get> 
+        </get>
         <delete id="deleteFromCache" path="/v1/cache/{cid}/{property}/{value}">
             <to uri="direct:deleteFromCache"/>
         </delete>
-     </rest> 
+    </rest>
 </rests>
