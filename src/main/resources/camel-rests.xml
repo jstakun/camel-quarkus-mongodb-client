@@ -24,4 +24,9 @@
             <to uri="direct:deleteFromCache"/>
         </delete>
     </rest>
+    <rest id="rh-summit" path="/api">
+        <post consumes="application/json" id="registerUser" path="/v1/register/{cid}">
+            <to uri="direct:registerUser"/>
+        </post>
+     </rest>   
 </rests>
