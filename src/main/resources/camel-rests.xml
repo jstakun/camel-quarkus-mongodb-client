@@ -31,6 +31,7 @@
 
     <rest id="rh-summit" path="/api">
         <post consumes="application/json" id="registerUser" path="/v1/register/{cid}">
+            <param name="cid" type="path" description="The name of the users collection" dataType="string"/>
             <to uri="direct:registerUser"/>
         </post>
         <get id="getTopLabels" path="/v1/labels/stats" produces="application/json">
@@ -40,6 +41,7 @@
             <to uri="direct:getTopUsers"/>
         </get>
          <get id="getLabelsByUser" path="/v1/labels/{uid}" produces="application/json">
+            <param name="uid" type="path" description="The nick of the user" dataType="string"/> 
             <to uri="direct:getLabelsByUser"/>
         </get>   
     </rest>
