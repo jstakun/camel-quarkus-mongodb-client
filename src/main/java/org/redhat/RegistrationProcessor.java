@@ -27,12 +27,13 @@ public class RegistrationProcessor implements Processor {
 			if (nick == null || nick.length() == 0) {
 				reg.put("nick", exchange.getIn().getHeader("x-redhat-nick"));
 				exchange.getIn().setHeader("CamelHttpResponseCode", 200);
-				LOG.info("Set nick to ...");
+				LOG.info("Setting nick");
 			} else if (!nick.equals(exchange.getIn().getHeader("x-redhat-nick"))) {
 				LOG.severe("Nick is set!");
-				exchange.getIn().setHeader("CamelHttpResponseCode", 400);
-				exchange.getIn().setBody("{}");
+				exchange.getIn().setHeader("CamelHttpResponseCode", 401);
+				exchange.getIn().setBody("{\"auth\":\"failed\"}");
 			} else {
+				LOG.info("Nick is ok");
 				exchange.getIn().setBody("{\"auth\":\"ok\"}");
 			}
 		}
