@@ -264,7 +264,7 @@
  				<simple>{{app.mongodb.default.collection}}</simple>           		
             </setHeader> 
             <setBody>
-        		<simple>[{ "$match": { "type": "response", "uid": "${header.uid}" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt:  {{app.recognition.percent}}  } } }, { "$group": { "_id": "$content.detections.label", "count": { $sum: 1 } } }, { "$sort" : { count : -1 } }]</simple>
+        	    <simple>[{ "$match": { "type": "response", "uid": "${header.uid}" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$content.detections.label", "count": { $sum: 1 } } }, { "$sort" : { count : -1 } }, { "$group": { "_id": "${header.uid}", labels: { $push: "$$ROOT" } } }, { $addFields: { total : { $sum: "$labels.count" } } }]</simple>
         	</setBody>
          	<to uri="direct:aggregateFromCache"/>
     		<doCatch>
