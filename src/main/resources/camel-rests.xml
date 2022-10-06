@@ -26,23 +26,24 @@
             <to uri="direct:deleteFromCache"/>
         </delete>
     </rest>
-   
-    <!--  RH Summit --> 
-
+    <!--  RH Summit -->
     <rest id="rh-summit" path="/api">
         <post consumes="application/json" id="registerUser" path="/v1/register/{cid}">
-            <param name="cid" type="path" description="The name of the users collection" dataType="string"/>
+            <param dataType="string"
+                description="The name of the users collection"
+                name="cid" type="path"/>
             <to uri="direct:registerUser"/>
         </post>
         <get id="getTopLabels" path="/v1/labels/stats" produces="application/json">
             <to uri="direct:getTopLabels"/>
         </get>
-         <get id="getTopUsers" path="/v1/users/stats" produces="application/json">
+        <get id="getTopUsers" path="/v1/users/stats" produces="application/json">
             <to uri="direct:getTopUsers"/>
         </get>
-         <get id="getLabelsByUser" path="/v1/labels/{uid}" produces="application/json">
-            <param name="uid" type="path" description="The nick of the user" dataType="string"/> 
+        <get id="getLabelsByUser" path="/v1/labels/{uid}" produces="application/json">
+            <param dataType="string" description="The nick of the user"
+                name="uid" type="path"/>
             <to uri="direct:getLabelsByUser"/>
-        </get>   
+        </get>
     </rest>
 </rests>

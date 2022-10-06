@@ -45,6 +45,7 @@
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findAll</simple>
         	</recipientList>
+        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents"/>
         	<to uri="direct:processOutput"/>
 	        <doCatch>
             	 <exception>java.lang.Exception</exception>
@@ -89,7 +90,7 @@
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findAll</simple>
         	</recipientList>
-        	<log loggingLevel="INFO" message="Done"/>
+        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents"/>
         	<to uri="direct:processOutput"/>
             <doCatch>
             	 <exception>java.lang.Exception</exception>
@@ -105,7 +106,24 @@
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=aggregate</simple>
         	</recipientList>
-        	<log loggingLevel="INFO" message="Done"/>
+        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents"/>
+            <choice>
+            	 <when>
+             		<simple>${body.size()} == 1</simple>
+             		<setBody>
+             			<simple>${body[0]}</simple>
+             		</setBody>
+        		</when>
+        		<when>
+             		<simple>${body.size()} == 0 &amp;&amp; ${header.default} != null</simple>
+             		<setBody>
+             			<simple>${header.default}</simple>
+             		</setBody>
+             		<setHeader name="content">
+             		     <constant>text</constant>
+             		</setHeader>
+        		</when>	
+            </choice>        	
         	<to uri="direct:processOutput"/>
             <doCatch>
             	 <exception>java.lang.Exception</exception>
@@ -157,9 +175,14 @@
     </route>
     <route id="Process output">
         <from uri="direct:processOutput"/>
-        <marshal>
-            <json id="json-po" library="Jackson"/>
-        </marshal>
+        <choice> 
+        	<when>
+            	<simple>${header.content} != 'text'</simple>
+        		<marshal>
+            		<json id="json-po" library="Jackson"/>
+        		</marshal>
+        	</when>
+        </choice>		
         <choice> 
         	<when>
             	<simple>${headers.accept-encoding} contains 'gzip'</simple>
@@ -262,6 +285,9 @@
         <doTry>
             <setHeader name="cid">
  				<simple>{{app.mongodb.default.collection}}</simple>           		
+            </setHeader>
+            <setHeader name="default">
+ 				<simple>{"_id": "${header.uid}", "labels":[], "total": 0}</simple>           		
             </setHeader> 
             <setBody>
         	    <simple>[{ "$match": { "type": "response", "uid": "${header.uid}" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$content.detections.label", "count": { $sum: 1 } } }, { "$sort" : { count : -1 } }, { "$group": { "_id": "${header.uid}", labels: { $push: "$$ROOT" } } }, { $addFields: { total : { $sum: "$labels.count" } } }]</simple>
