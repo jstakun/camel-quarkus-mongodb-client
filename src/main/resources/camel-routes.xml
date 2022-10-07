@@ -106,7 +106,7 @@
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=aggregate</simple>
         	</recipientList>
-        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents"/>
+        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents ${body}"/>
             <choice>
             	 <when>
              		<simple>${body.size()} == 1</simple>
@@ -119,9 +119,7 @@
              		<setBody>
              			<simple>${header.default}</simple>
              		</setBody>
-             		<setHeader name="content">
-             		     <constant>text</constant>
-             		</setHeader>
+             		<convertBodyTo type="org.bson.Document"/>
         		</when>	
             </choice>        	
         	<to uri="direct:processOutput"/>
@@ -175,14 +173,9 @@
     </route>
     <route id="Process output">
         <from uri="direct:processOutput"/>
-        <choice> 
-        	<when>
-            	<simple>${header.content} != 'text'</simple>
-        		<marshal>
-            		<json id="json-po" library="Jackson"/>
-        		</marshal>
-        	</when>
-        </choice>		
+        <marshal>
+            <json id="json-po" library="Jackson"/>
+        </marshal>
         <choice> 
         	<when>
             	<simple>${headers.accept-encoding} contains 'gzip'</simple>
@@ -208,6 +201,12 @@
         	<unmarshal>
             	<json id="json-re" library="Jackson" unmarshalType="org.redhat.Registration"/>
         	</unmarshal>
+        	<validate>
+            	<simple>${body.email} != null &amp;&amp; ${body.email.length} > 0</simple>
+        	</validate>
+        	<validate>
+            	<simple>${body.nick} != null &amp;&amp; ${body.nick.length} > 0</simple>
+        	</validate>
         	<setHeader name="x-redhat-email">
             	<simple>${body.email}</simple>
         	</setHeader>

@@ -7,7 +7,16 @@
     "allPublicMethods" : true,
     "allDeclaredFields" : true,
     "allPublicFields" : true
-  },  
+  },
+  {
+    "name" : "org.bson.Document",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true,
+    "allDeclaredFields" : true,
+    "allPublicFields" : true
+  },   
   {
     "name" : "java.lang.Exception",
     "allDeclaredConstructors" : true,
