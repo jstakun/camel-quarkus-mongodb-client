@@ -19,8 +19,8 @@ public class RegistrationProcessor implements Processor {
 	
 	@Override
 	public void process(Exchange exchange) throws Exception {
-		Object body = exchange.getIn().getBody();
-		LOG.info("Processing ...");
+		final Object body = exchange.getIn().getBody();
+		LOG.info("Processing document ...");
 		if (body instanceof org.bson.Document) {
 			org.bson.Document reg = (org.bson.Document) body;
 			final String nick = reg.getString("nick");
@@ -29,12 +29,13 @@ public class RegistrationProcessor implements Processor {
 				exchange.getIn().setHeader("CamelHttpResponseCode", 200);
 				LOG.info("Setting nick");
 			} else if (!nick.equals(exchange.getIn().getHeader("x-redhat-nick"))) {
-				LOG.severe("Nick is set!");
+				LOG.severe("Nick has been set!");
 				exchange.getIn().setHeader("CamelHttpResponseCode", 401);
 				exchange.getIn().setBody("{\"auth\":\"failed\"}");
 			} else {
-				LOG.info("Nick is ok");
-				exchange.getIn().setBody("{\"auth\":\"ok\"}");
+				LOG.info("Nick is valid");
+				final String id = reg.getObjectId("_id").toHexString();
+				exchange.getIn().setBody("{\"id\":\"" + id + "\"}");
 			}
 		}
 	}
