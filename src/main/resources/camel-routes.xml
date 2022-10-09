@@ -101,12 +101,12 @@
     <route id="Aggregate from cache">
         <from uri="direct:aggregateFromCache"/>
         <doTry>
-        	<log loggingLevel="INFO" message="Aggregate from cache ${header.cid} by ${body}"/>
+        	<log loggingLevel="INFO" message="Endpoint ${header.CamelHttpUri}: Aggregate from cache ${header.cid} by ${body}"/>
        	    <convertBodyTo type="java.lang.String"/>
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=aggregate</simple>
         	</recipientList>
-        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents ${body}"/>
+        	<log loggingLevel="INFO" message="Endpoint ${header.CamelHttpUri}: Done. Found ${body.size()} documents ${body}"/>
             <choice>
             	 <when>
              		<simple>${body.size()} == 1</simple>
