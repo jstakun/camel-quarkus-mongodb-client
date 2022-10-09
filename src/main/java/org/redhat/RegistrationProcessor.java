@@ -1,6 +1,6 @@
 package org.redhat;
 
-import java.util.logging.Logger;
+import io.quarkus.logging.Log;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Named;
@@ -15,25 +15,24 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 @RegisterForReflection
 public class RegistrationProcessor implements Processor {
 
-	private static final Logger LOG = Logger.getLogger(RegistrationProcessor.class.getName());
-	
 	@Override
 	public void process(Exchange exchange) throws Exception {
 		final Object body = exchange.getIn().getBody();
-		LOG.info("Processing document ...");
+		Log.info("Processing document ...");
 		if (body instanceof org.bson.Document) {
 			org.bson.Document reg = (org.bson.Document) body;
 			final String nick = reg.getString("nick");
 			if (nick == null || nick.length() == 0) {
 				reg.put("nick", exchange.getIn().getHeader("x-redhat-nick"));
 				exchange.getIn().setHeader("CamelHttpResponseCode", 200);
-				LOG.info("Setting nick");
+				Log.info("Setting nick.");
 			} else if (!nick.equals(exchange.getIn().getHeader("x-redhat-nick"))) {
-				LOG.severe("Nick has been set!");
+				final String email = reg.getString("email");
+				Log.error("Nick for email " + email + " has been set!");
 				exchange.getIn().setHeader("CamelHttpResponseCode", 401);
 				exchange.getIn().setBody("{\"auth\":\"failed\"}");
 			} else {
-				LOG.info("Nick is valid");
+				Log.info("Nick is valid.");
 				final String id = reg.getObjectId("_id").toHexString();
 				exchange.getIn().setBody("{\"id\":\"" + id + "\"}");
 			}

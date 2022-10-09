@@ -237,6 +237,7 @@
 		        	<setHeader name="CamelHttpResponseCode">
         		    	<constant>404</constant>
         			</setHeader>
+        			<log loggingLevel="ERROR" message="Email ${header.x-redhat-email} not found!"/>
              	</otherwise>			  
         	</choice>
         	<removeHeaders pattern="x-redhat*"/>	
