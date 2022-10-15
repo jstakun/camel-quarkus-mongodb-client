@@ -4,7 +4,7 @@
     <route id="Put to cache">
         <from uri="direct:putToCache"/>
         <doTry>
-        	<log loggingLevel="INFO" message="Inserting to collection ${header.cid} 1 document..."/>
+        	<log loggingLevel="INFO" message="Inserting document to collection ${header.cid} ..."/>
         	<convertBodyTo type="java.lang.String"/>
         	<to uri="direct:insertRecord"/>
         	<log loggingLevel="INFO" message="Done"/>
@@ -23,7 +23,7 @@
         <recipientList>
             <simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=save</simple>
         </recipientList>
-        <log loggingLevel="INFO" message="Inserted to collection ${header.cid} document with id ${header.CamelMongoOid}"/>
+        <log loggingLevel="INFO" message="Document with id ${header.CamelMongoOid} inserted to collection ${header.cid}."/>
     </route>
     <route id="Get from cache">
         <from uri="direct:getFromCache"/>
@@ -45,7 +45,7 @@
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findAll</simple>
         	</recipientList>
-        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents"/>
+        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents."/>
         	<to uri="direct:processOutput"/>
 	        <doCatch>
             	 <exception>java.lang.Exception</exception>
@@ -60,7 +60,12 @@
         	<setBody>
         		<simple>${header.oid}</simple>
         	</setBody>
-        	<convertBodyTo type="org.bson.types.ObjectId"/> 	
+        	<choice>
+        		<when>
+        		    <simple>${body.length} == 24</simple>
+        			<convertBodyTo type="org.bson.types.ObjectId"/> 	
+        		</when>
+        	</choice>
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findById</simple>
         	</recipientList>
@@ -90,7 +95,7 @@
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findAll</simple>
         	</recipientList>
-        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents"/>
+        	<log loggingLevel="INFO" message="Done. Found ${body.size()} documents."/>
         	<to uri="direct:processOutput"/>
             <doCatch>
             	 <exception>java.lang.Exception</exception>
@@ -101,12 +106,12 @@
     <route id="Aggregate from cache">
         <from uri="direct:aggregateFromCache"/>
         <doTry>
-        	<log loggingLevel="INFO" message="Endpoint ${header.CamelHttpUri}: Aggregate from cache ${header.cid} by ${body}"/>
+        	<log loggingLevel="INFO" message="Endpoint ${header.CamelHttpUri}: Aggregate from cache ${header.cid} by ..."/>
        	    <convertBodyTo type="java.lang.String"/>
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=aggregate</simple>
         	</recipientList>
-        	<log loggingLevel="INFO" message="Endpoint ${header.CamelHttpUri}: Done. Found ${body.size()} documents ${body}"/>
+        	<log loggingLevel="INFO" message="Endpoint ${header.CamelHttpUri}: Done. Found ${body.size()} documents."/>
             <choice>
             	 <when>
              		<simple>${body.size()} == 1</simple>
@@ -143,7 +148,7 @@
     <route id="Delete from cache">
         <from uri="direct:deleteFromCache"/>
         <doTry>
-        	<log loggingLevel="INFO" message="Delete from collection ${header.cid} objects matching ${header.property}: ${header.value}"/>
+        	<log loggingLevel="INFO" message="Delete from collection ${header.cid} documents matching ${header.property}: ${header.value}"/>
         	<setBody>
             	<simple>{"${header.property}" : "${header.value}"}</simple>
         	</setBody>
@@ -251,13 +256,16 @@
     <route id="Get top labels">
         <from uri="direct:getTopLabels"/>
         <doTry>
-            <setHeader name="cid">
- 				<simple>{{app.mongodb.default.collection}}</simple>           		
-            </setHeader> 
             <setBody>
-        		<simple>[{ "$match": { "type": "response" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$content.detections.label", "total": { $sum: 1 } } }, { "$sort" : { total : -1 } }, { $limit : {{app.label.stats.limit}} }]</simple>
-        	</setBody>
-         	<to uri="direct:aggregateFromCache"/>
+ 				<simple>labels</simple>           		
+            </setBody> 
+            <recipientList>
+            	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection={{app.mongodb.default.stats.collection}}&amp;operation=findById</simple>
+        	</recipientList>
+            <setBody>
+            	<simple>${body.get("stats")}</simple>
+            </setBody>
+            <to uri="direct:processOutput"/>
     		<doCatch>
             	 <exception>java.lang.Exception</exception>
                  <to uri="direct:logError"/>
@@ -267,14 +275,17 @@
     <route id="Get top users">
         <from uri="direct:getTopUsers"/>
         <doTry>
-            <setHeader name="cid">
- 				<simple>{{app.mongodb.default.collection}}</simple>           		
-            </setHeader> 
             <setBody>
-                <simple>[{ "$match": { "type": "response", "$expr": { "$eq": [ { "$strLenCP":"$uid" }, 24 ] } } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$lookup": { from: "users", let: { "userId": { "$toObjectId": "$uid" } }, pipeline: [ { $match: { $expr: { $eq: [ "$_id", "$$userId" ] } } } ], as: "user" } }, { "$group": { "_id": "$uid", labels: {$addToSet: "$content.detections.label"}, "nick" :  { $first: "$user.nick" } } }, { "$project": { "_id" : 1, count: { "$size": "$labels" }, "nick": { $arrayElemAt: [ "$nick", 0 ] } } }, { "$project": { "_id" : 1, count: 1, "nick": { $ifNull: [ "$nick", "unknown" ] } } }, { "$sort" : { count : -1 } }, { $limit : {{app.user.stats.limit}} }]</simple>
-        	</setBody>
-         	<to uri="direct:aggregateFromCache"/>
-    		<doCatch>
+ 				<simple>users</simple>           		
+            </setBody> 
+            <recipientList>
+            	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection={{app.mongodb.default.stats.collection}}&amp;operation=findById</simple>
+        	</recipientList>
+            <setBody>
+            	<simple>${body.get("stats")}</simple>
+            </setBody>
+            <to uri="direct:processOutput"/>
+            <doCatch>
             	 <exception>java.lang.Exception</exception>
                  <to uri="direct:logError"/>
             </doCatch>
@@ -298,5 +309,51 @@
                  <to uri="direct:logError"/>
             </doCatch>
         </doTry>        
+    </route>    
+    <route id="Generate users stats">
+        <from uri="timer:generate-users-stats?period={{app.user.stats.period}}"/>
+       <doTry>
+            <setHeader name="cid">
+ 				<simple>{{app.mongodb.default.collection}}</simple>           		
+            </setHeader> 
+            <setBody>
+                <simple>[{ "$match": { "type": "response", "$expr": { "$eq": [ { "$strLenCP":"$uid" }, 24 ] } } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$lookup": { from: "users", let: { "userId": { "$toObjectId": "$uid" } }, pipeline: [ { $match: { $expr: { $eq: [ "$_id", "$$userId" ] } } } ], as: "user" } }, { "$group": { "_id": "$uid", labels: {$addToSet: "$content.detections.label"}, "nick" :  { $first: "$user.nick" } } }, { "$project": { "_id" : 1, count: { "$size": "$labels" }, "nick": { $arrayElemAt: [ "$nick", 0 ] } } }, { "$project": { "_id" : 1, count: 1, "nick": { $ifNull: [ "$nick", "unknown" ] } } }, { "$sort" : { count : -1 } }, { $limit : {{app.user.stats.limit}} }]</simple>
+        	</setBody>
+         	<to uri="direct:aggregateFromCache"/>
+            <setBody>
+         	    <simple>{"_id": "users", stats: ${body}}</simple>
+            </setBody>	    
+            <setHeader name="cid">
+ 				<simple>{{app.mongodb.default.stats.collection}}</simple>           		
+            </setHeader>
+            <to uri="direct:putToCache"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
+    </route>
+    <route id="Generate labels stats">
+        <from uri="timer:generate-labels-stats?period={{app.label.stats.period}}"/>
+       <doTry>
+            <setHeader name="cid">
+ 				<simple>{{app.mongodb.default.collection}}</simple>           		
+            </setHeader> 
+            <setBody>
+        		<simple>[{ "$match": { "type": "response" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$content.detections.label", "total": { $sum: 1 } } }, { "$sort" : { total : -1 } }, { $limit : {{app.label.stats.limit}} }]</simple>
+        	</setBody>
+         	<to uri="direct:aggregateFromCache"/>
+            <setBody>
+         	    <simple>{"_id": "labels", stats: ${body}}</simple>
+            </setBody>	    
+            <setHeader name="cid">
+ 				<simple>{{app.mongodb.default.stats.collection}}</simple>           		
+            </setHeader>
+            <to uri="direct:putToCache"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
     </route>    
 </routes>
