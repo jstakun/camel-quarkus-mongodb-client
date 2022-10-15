@@ -311,7 +311,7 @@
         </doTry>        
     </route>    
     <route id="Generate users stats">
-        <from uri="timer:generate-users-stats?period={{app.user.stats.period}}"/>
+        <from uri="master:rh-summit-app:timer://generate-users-stats?period={{app.user.stats.period}}"/>
        <doTry>
             <setHeader name="cid">
  				<simple>{{app.mongodb.default.collection}}</simple>           		
@@ -334,7 +334,7 @@
         </doTry>    
     </route>
     <route id="Generate labels stats">
-        <from uri="timer:generate-labels-stats?period={{app.label.stats.period}}"/>
+        <from uri="master:rh-summit-app:timer://generate-labels-stats?period={{app.label.stats.period}}"/>
        <doTry>
             <setHeader name="cid">
  				<simple>{{app.mongodb.default.collection}}</simple>           		
