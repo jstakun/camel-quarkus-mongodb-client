@@ -28,15 +28,21 @@
     </rest>
     <!--  RH Summit -->
     <rest id="rh-summit" path="/api">
-        <post consumes="application/json" id="registerUser" path="/v1/register/{cid}">
+        <post id="registerUser" path="/v1/register/{cid}" consumes="application/json" >
             <param dataType="string"
                 description="The name of the users collection"
                 name="cid" type="path"/>
             <to uri="direct:registerUser"/>
         </post>
+        <post id="generateLabelsStats" path="/v1/labels/stats" produces="application/json">
+            <to uri="direct:generateLabelsStatsInstant"/>
+        </post>
         <get id="getTopLabels" path="/v1/labels/stats" produces="application/json">
             <to uri="direct:getTopLabels"/>
         </get>
+        <post id="generateUsersStats" path="/v1/users/stats" produces="application/json">
+            <to uri="direct:generateUsersStatsInstant"/>
+        </post>
         <get id="getTopUsers" path="/v1/users/stats" produces="application/json">
             <to uri="direct:getTopUsers"/>
         </get>

@@ -9,7 +9,7 @@
         	<to uri="direct:insertRecord"/>
         	<log loggingLevel="INFO" message="Done"/>
         	<setBody>
-            	<simple>{"id": "${header.CamelMongoOid}"}</simple>
+            	<simple>{"_id": "${header.CamelMongoOid}"}</simple>
         	</setBody>
         	<removeHeaders pattern="*"/>
         	<doCatch>
@@ -311,7 +311,22 @@
         </doTry>        
     </route>    
     <route id="Generate users stats">
-        <from uri="master:rh-summit-app:timer://generate-users-stats?period={{app.user.stats.period}}"/>
+       <from uri="master:rh-summit-app:timer://generate-users-stats?period={{app.user.stats.period}}"/>
+       <to uri="direct:generateUsersStats"/>
+    </route>
+    <route id="Generate users stats instant">
+		<from uri="direct:generateUsersStatsInstant"/>
+		<doTry>    
+		    <to uri="direct:generateUsersStats"/>
+            <to uri="direct:getTopUsers"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
+	</route>
+    <route id="Generate users stats internal">
+       <from uri="direct:generateUsersStats"/>   
        <doTry>
             <setHeader name="cid">
  				<simple>{{app.mongodb.default.collection}}</simple>           		
@@ -321,7 +336,7 @@
         	</setBody>
          	<to uri="direct:aggregateFromCache"/>
             <setBody>
-         	    <simple>{"_id": "users", stats: ${body}}</simple>
+         	    <simple>{"_id": "users", "stats": ${body}}</simple>
             </setBody>	    
             <setHeader name="cid">
  				<simple>{{app.mongodb.default.stats.collection}}</simple>           		
@@ -334,7 +349,22 @@
         </doTry>    
     </route>
     <route id="Generate labels stats">
-        <from uri="master:rh-summit-app:timer://generate-labels-stats?period={{app.label.stats.period}}"/>
+       <from uri="master:rh-summit-app:timer://generate-labels-stats?period={{app.label.stats.period}}"/>
+       <to uri="direct:generateLabelsStats"/>
+    </route>
+    <route id="Generate labels stats instant">
+		<from uri="direct:generateLabelsStatsInstant"/>
+		<doTry>    
+		    <to uri="direct:generateLabelsStats"/>
+            <to uri="direct:getTopLabels"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
+	</route>    
+    <route id="Generate labels stats internal">
+       <from uri="direct:generateLabelsStats"/>   
        <doTry>
             <setHeader name="cid">
  				<simple>{{app.mongodb.default.collection}}</simple>           		
@@ -344,7 +374,7 @@
         	</setBody>
          	<to uri="direct:aggregateFromCache"/>
             <setBody>
-         	    <simple>{"_id": "labels", stats: ${body}}</simple>
+         	    <simple>{"_id": "labels", "stats": ${body}}</simple>
             </setBody>	    
             <setHeader name="cid">
  				<simple>{{app.mongodb.default.stats.collection}}</simple>           		
