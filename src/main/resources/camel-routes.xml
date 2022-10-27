@@ -298,10 +298,10 @@
  				<simple>{{app.mongodb.default.collection}}</simple>           		
             </setHeader>
             <setHeader name="default">
- 				<simple>{"_id": "${header.uid}", "labels":[], "total": 0}</simple>           		
+ 				<simple>{"_id": "${header.uid}", "labels":[], "total": 0, "sum": 0}</simple>           		
             </setHeader> 
             <setBody>
-        	    <simple>[{ "$match": { "type": "response", "uid": "${header.uid}" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$content.detections.label", "count": { $sum: 1 } } }, { "$sort" : { count : -1 } }, { "$group": { "_id": "${header.uid}", labels: { $push: "$$ROOT" } } }, { $addFields: { total : { $sum: "$labels.count" } } }]</simple>
+        	    <simple>[{ "$match": { "type": "response", "uid": "${header.uid}" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$content.detections.label", "count": { $sum: 1 } } }, { "$sort" : { count : -1 } }, { "$group": { "_id": "${header.uid}", labels: { $push: "$$ROOT" } } }, { $addFields: { total : { $size: "$labels" },  sum: { $sum: "$labels.count" } } }]</simple>
         	</setBody>
          	<to uri="direct:aggregateFromCache"/>
     		<doCatch>
@@ -331,8 +331,11 @@
             <setHeader name="cid">
  				<simple>{{app.mongodb.default.collection}}</simple>           		
             </setHeader> 
+            <setHeader name="CamelHttpUri">
+ 				<simple>/generate-users-stats</simple>           		
+            </setHeader>   
             <setBody>
-                <simple>[{ "$match": { "type": "response", "$expr": { "$eq": [ { "$strLenCP":"$uid" }, 24 ] } } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$lookup": { from: "users", let: { "userId": { "$toObjectId": "$uid" } }, pipeline: [ { $match: { $expr: { $eq: [ "$_id", "$$userId" ] } } } ], as: "user" } }, { "$group": { "_id": "$uid", labels: {$addToSet: "$content.detections.label"}, "nick" :  { $first: "$user.nick" } } }, { "$project": { "_id" : 1, count: { "$size": "$labels" }, "nick": { $arrayElemAt: [ "$nick", 0 ] } } }, { "$project": { "_id" : 1, count: 1, "nick": { $ifNull: [ "$nick", "unknown" ] } } }, { "$sort" : { count : -1 } }, { $limit : {{app.user.stats.limit}} }]</simple>
+                <simple>[{ "$match": { "type": "response", "$expr": { "$eq": [ { "$strLenCP":"$uid" }, 24 ] } } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$uid", labels: {$addToSet: "$content.detections.label"} } }, { "$project": { "_id" : 1, count: { "$size": "$labels" } } }, { "$sort" : { count : -1 } }, { $limit : {{app.user.stats.limit}} }, { "$lookup": { from: "users", let: { "userId": { "$toObjectId": "$_id" } }, pipeline: [ { $match: { $expr: { $eq: [ "$_id", "$$userId" ] } } } ], as: "user" } }, { "$project": { "_id" : 1, count: 1, "nick" :  { $first: "$user.nick" }, "email" :  { $first: "$user.email" } } }, { "$project": { "_id" : 1, count: 1, "nick": { $ifNull: [ "$nick", "unknown" ] }, "email": { $ifNull: [ "$email", "unknown" ] } } }]</simple>
         	</setBody>
          	<to uri="direct:aggregateFromCache"/>
             <setBody>
@@ -368,7 +371,10 @@
        <doTry>
             <setHeader name="cid">
  				<simple>{{app.mongodb.default.collection}}</simple>           		
-            </setHeader> 
+            </setHeader>
+            <setHeader name="CamelHttpUri">
+ 				<simple>/generate-labels-stats</simple>           		
+            </setHeader>   
             <setBody>
         		<simple>[{ "$match": { "type": "response" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$content.detections.label", "total": { $sum: 1 } } }, { "$sort" : { total : -1 } }, { $limit : {{app.label.stats.limit}} }]</simple>
         	</setBody>
