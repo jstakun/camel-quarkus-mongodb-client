@@ -14,9 +14,9 @@
             <to uri="direct:getFromCache"/>
         </get>
         <get id="getByIdFromDB" path="/v1/cache/{cid}/id/{oid}" produces="application/json">
-            <description>Get document from DB by id</description> 
+            <description>Get document from DB by Id</description> 
             <param dataType="string" description="The name of the DB collection" name="cid" type="path"/>
-            <param dataType="string" description="Document id" name="oid" type="path"/>  
+            <param dataType="string" description="Document Id" name="oid" type="path"/>  
             <to uri="direct:getFromCacheById"/>
         </get>
         <post id="aggregateFromDB" consumes="application/json" path="/v1/aggregate/cache/{cid}" produces="application/json">
@@ -25,7 +25,7 @@
             <to uri="direct:aggregateFromCache"/>
         </post>
         <post id="getByQueryFromDB" consumes="application/json" path="/v1/cache/{cid}/{limit}" produces="application/json">
-            <description>Get documents to DB. Query could be included in request body</description> 
+            <description>Get documents from DB. Query could be included in request body</description> 
             <param dataType="string" description="The name of the DB collection" name="cid" type="path"/>  
             <param dataType="int" description="Limit of returned documents" name="limit" type="path"/>  
             <to uri="direct:getByQueryFromCache"/>
@@ -65,7 +65,7 @@
         </get>
         <get id="getLabelsByUser" path="/v1/labels/{uid}" produces="application/json">
 			<description>Get current labels by user score</description>
-            <param dataType="string" description="User store id of the user" name="uid" type="path"/>
+            <param dataType="string" description="User Id" name="uid" type="path"/>
             <to uri="direct:getLabelsByUser"/>
         </get>
     </rest>
