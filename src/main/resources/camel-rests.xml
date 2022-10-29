@@ -29,25 +29,31 @@
     <!--  RH Summit -->
     <rest id="rh-summit" path="/api">
         <post id="registerUser" path="/v1/register/{cid}" consumes="application/json" >
+            <description>Register or login user</description>
             <param dataType="string"
-                description="The name of the users collection"
+                description="The name of the user store collection"
                 name="cid" type="path"/>
             <to uri="direct:registerUser"/>
         </post>
         <post id="generateLabelsStats" path="/v1/labels/stats" produces="application/json">
+            <description>Get current top labels score</description>
             <to uri="direct:generateLabelsStatsInstant"/>
         </post>
         <get id="getTopLabels" path="/v1/labels/stats" produces="application/json">
+            <description>Get saved top labels score</description>
             <to uri="direct:getTopLabels"/>
         </get>
         <post id="generateUsersStats" path="/v1/users/stats" produces="application/json">
+            <description>Get current top users score</description>
             <to uri="direct:generateUsersStatsInstant"/>
         </post>
         <get id="getTopUsers" path="/v1/users/stats" produces="application/json">
+            <description>Get saved top users score</description>
             <to uri="direct:getTopUsers"/>
         </get>
         <get id="getLabelsByUser" path="/v1/labels/{uid}" produces="application/json">
-            <param dataType="string" description="The nick of the user"
+			<description>Get current labels by user score</description>
+            <param dataType="string" description="User store id of the user"
                 name="uid" type="path"/>
             <to uri="direct:getLabelsByUser"/>
         </get>
