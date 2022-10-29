@@ -2,27 +2,41 @@
 <rests xmlns="http://camel.apache.org/schema/spring"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://camel.apache.org/schema/spring https://camel.apache.org/schema/spring/camel-spring-3.18.0.xsd">
     <rest id="cache" path="/camel">
-        <post consumes="application/json" id="putToCache" path="/v1/cache/{cid}">
+        <post id="insertToDB" consumes="application/json" path="/v1/cache/{cid}">
+            <description>Insert document to DB. Document must be included in request body</description> 
+            <param dataType="string" description="The name of the DB collection" name="cid" type="path"/>  
             <to uri="direct:putToCache"/>
         </post>
-        <get id="getFromCache" path="/v1/cache/{cid}/{limit}" produces="application/json">
+        <get id="getFromDB" path="/v1/cache/{cid}/{limit}" produces="application/json">
+            <description>Get all documents from DB</description> 
+            <param dataType="string" description="The name of the DB collection" name="cid" type="path"/>  
+            <param dataType="int" description="Limit of returned documents" name="limit" type="path"/>  
             <to uri="direct:getFromCache"/>
         </get>
-        <get id="getFromCache" path="/v1/cache/{cid}/id/{oid}" produces="application/json">
+        <get id="getByIdFromDB" path="/v1/cache/{cid}/id/{oid}" produces="application/json">
+            <description>Get document from DB by id</description> 
+            <param dataType="string" description="The name of the DB collection" name="cid" type="path"/>
+            <param dataType="string" description="Document id" name="oid" type="path"/>  
             <to uri="direct:getFromCacheById"/>
         </get>
-        <post consumes="application/json" id="aggregateFromCache"
-            path="/v1/aggregate/cache/{cid}" produces="application/json">
+        <post id="aggregateFromDB" consumes="application/json" path="/v1/aggregate/cache/{cid}" produces="application/json">
+            <description>Aggregate documents from DB. Aggregate content must be included in request body</description> 
+            <param dataType="string" description="The name of the DB collection" name="cid" type="path"/>  
             <to uri="direct:aggregateFromCache"/>
         </post>
-        <post consumes="application/json" id="getByQueryFromCache"
-            path="/v1/cache/{cid}/{limit}" produces="application/json">
+        <post id="getByQueryFromDB" consumes="application/json" path="/v1/cache/{cid}/{limit}" produces="application/json">
+            <description>Get documents to DB. Query could be included in request body</description> 
+            <param dataType="string" description="The name of the DB collection" name="cid" type="path"/>  
+            <param dataType="int" description="Limit of returned documents" name="limit" type="path"/>  
             <to uri="direct:getByQueryFromCache"/>
         </post>
-        <get id="getDbStats" path="/v1/cache/stats" produces="application/json">
+        <get id="getStatsFromDB" path="/v1/cache/stats" produces="application/json">
             <to uri="direct:getDbStats"/>
         </get>
-        <delete id="deleteFromCache" path="/v1/cache/{cid}/{property}/{value}">
+        <delete id="deleteFromDB" path="/v1/cache/{cid}/{property}/{value}">
+            <param dataType="string" description="The name of the DB collection" name="cid" type="path"/>
+            <param dataType="string" description="JSON document property name" name="property" type="path"/>
+            <param dataType="string" description="JSON document property value" name="value" type="path"/>   
             <to uri="direct:deleteFromCache"/>
         </delete>
     </rest>
@@ -30,31 +44,28 @@
     <rest id="rh-summit" path="/api">
         <post id="registerUser" path="/v1/register/{cid}" consumes="application/json" >
             <description>Register or login user</description>
-            <param dataType="string"
-                description="The name of the user store collection"
-                name="cid" type="path"/>
+            <param dataType="string" description="The name of the user store collection" name="cid" type="path"/>
             <to uri="direct:registerUser"/>
         </post>
-        <post id="generateLabelsStats" path="/v1/labels/stats" produces="application/json">
+        <post id="getTopLabels" path="/v1/labels/stats" produces="application/json">
             <description>Get current top labels score</description>
             <to uri="direct:generateLabelsStatsInstant"/>
         </post>
-        <get id="getTopLabels" path="/v1/labels/stats" produces="application/json">
+        <get id="getTopLabelsFromDB" path="/v1/labels/stats" produces="application/json">
             <description>Get saved top labels score</description>
             <to uri="direct:getTopLabels"/>
         </get>
-        <post id="generateUsersStats" path="/v1/users/stats" produces="application/json">
+        <post id="getTopUsers" path="/v1/users/stats" produces="application/json">
             <description>Get current top users score</description>
             <to uri="direct:generateUsersStatsInstant"/>
         </post>
-        <get id="getTopUsers" path="/v1/users/stats" produces="application/json">
+        <get id="getTopUsersFromDB" path="/v1/users/stats" produces="application/json">
             <description>Get saved top users score</description>
             <to uri="direct:getTopUsers"/>
         </get>
         <get id="getLabelsByUser" path="/v1/labels/{uid}" produces="application/json">
 			<description>Get current labels by user score</description>
-            <param dataType="string" description="User store id of the user"
-                name="uid" type="path"/>
+            <param dataType="string" description="User store id of the user" name="uid" type="path"/>
             <to uri="direct:getLabelsByUser"/>
         </get>
     </rest>
