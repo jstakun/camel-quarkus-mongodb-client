@@ -219,7 +219,7 @@
             	<simple>${body.nick}</simple>
         	</setHeader>
         	<setBody>
-            	 <simple>{"email": "${header.x-redhat-email}"}</simple>
+            	 <simple>{"email": { $regex: /${header.x-redhat-email}/i }}</simple>
         	</setBody>
         	<recipientList>
             	 <simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findOneByQuery</simple>
