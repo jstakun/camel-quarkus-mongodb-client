@@ -311,7 +311,7 @@
         </doTry>        
     </route>    
     <route id="Generate users stats">
-       <from uri="master:rh-summit-app:timer://generate-users-stats?period={{app.user.stats.period}}"/>
+       <from uri="master:{{app.namespace}}:timer://generate-users-stats?period={{app.user.stats.period}}"/>
        <to uri="direct:generateUsersStats"/>
     </route>
     <route id="Generate users stats instant">
@@ -352,7 +352,7 @@
         </doTry>    
     </route>
     <route id="Generate labels stats">
-       <from uri="master:rh-summit-app:timer://generate-labels-stats?period={{app.label.stats.period}}"/>
+       <from uri="master:{{app.namespace}}:timer://generate-labels-stats?period={{app.label.stats.period}}"/>
        <to uri="direct:generateLabelsStats"/>
     </route>
     <route id="Generate labels stats instant">
