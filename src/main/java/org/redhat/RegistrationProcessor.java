@@ -28,7 +28,7 @@ public class RegistrationProcessor implements Processor {
 				Log.info("Setting nick.");
 			} else if (!nick.equals(exchange.getIn().getHeader("x-redhat-nick"))) {
 				final String email = reg.getString("email");
-				Log.error("Nick for email " + email + " has been set!");
+				Log.error("Nick for email " + email + " was set!");
 				exchange.getIn().setHeader("CamelHttpResponseCode", 401);
 				exchange.getIn().setBody("{\"auth\":\"failed\"}");
 			} else {

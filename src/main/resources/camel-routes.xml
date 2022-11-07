@@ -213,10 +213,10 @@
             	<simple>${body.nick} != null &amp;&amp; ${body.nick.length} > 0</simple>
         	</validate>
         	<setHeader name="x-redhat-email">
-            	<simple>${body.email}</simple>
+            	<simple>${body.email.trim()}</simple>
         	</setHeader>
         	<setHeader name="x-redhat-nick">
-            	<simple>${body.nick}</simple>
+            	<simple>${body.nick.trim()}</simple>
         	</setHeader>
         	<setBody>
             	 <simple>{"email": { $regex: /${header.x-redhat-email}/i }}</simple>
@@ -242,7 +242,7 @@
 		        	<setHeader name="CamelHttpResponseCode">
         		    	<constant>404</constant>
         			</setHeader>
-        			<log loggingLevel="ERROR" message="Email ${header.x-redhat-email} not found!"/>
+        			<log loggingLevel="ERROR" message="Email --${header.x-redhat-email}-- not found!"/>
              	</otherwise>			  
         	</choice>
         	<removeHeaders pattern="x-redhat*"/>	
