@@ -33,12 +33,11 @@
         <get id="getStatsFromDB" path="/v1/cache/stats" produces="application/json">
             <to uri="direct:getDbStats"/>
         </get>
-        <delete id="deleteFromDB" path="/v1/cache/{cid}/{property}/{value}">
+        <post id="deleteFromDB" path="/v1/delete/cache/{cid}">
+            <description>Delete documents from DB. Filter query must be included in request body</description> 
             <param dataType="string" description="The name of the DB collection" name="cid" type="path"/>
-            <param dataType="string" description="JSON document property name" name="property" type="path"/>
-            <param dataType="string" description="JSON document property value" name="value" type="path"/>   
             <to uri="direct:deleteFromCache"/>
-        </delete>
+        </post>
     </rest>
     <!--  RH Summit -->
     <rest id="rh-summit" path="/api">

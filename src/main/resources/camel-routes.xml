@@ -148,10 +148,8 @@
     <route id="Delete from cache">
         <from uri="direct:deleteFromCache"/>
         <doTry>
-        	<log loggingLevel="INFO" message="Delete from collection ${header.cid} documents matching ${header.property}: ${header.value}"/>
-        	<setBody>
-            	<simple>{"${header.property}" : "${header.value}"}</simple>
-        	</setBody>
+        	<log loggingLevel="INFO" message="Delete from collection ${header.cid} documents matching ${body}"/>
+        	<convertBodyTo type="java.lang.String"/>
         	<recipientList>
             	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=remove</simple>
         	</recipientList>
