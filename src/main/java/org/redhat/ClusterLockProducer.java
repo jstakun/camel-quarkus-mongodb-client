@@ -2,6 +2,7 @@ package org.redhat;
 
 import io.quarkus.arc.profile.IfBuildProfile;
 import io.quarkus.arc.profile.UnlessBuildProfile;
+
 import org.apache.camel.CamelContext;
 import org.apache.camel.cluster.CamelClusterService;
 import org.apache.camel.component.file.cluster.FileLockClusterService;
@@ -16,8 +17,14 @@ import java.util.concurrent.TimeUnit;
 @ApplicationScoped
 public class ClusterLockProducer {
 
-    @ConfigProperty(name = "namespace")
+    @ConfigProperty(name = "app.namespace")
     Optional<String> namespace;
+    
+    @ConfigProperty(name = "app.label.key") 
+    Optional<String> labelKey;
+    
+    @ConfigProperty(name = "app.label.value") 
+    Optional<String> labelValue;
 
     @Produces
     @UnlessBuildProfile("prod")
@@ -35,6 +42,9 @@ public class ClusterLockProducer {
         KubernetesClusterService service = new KubernetesClusterService();
         if (namespace.isPresent()){
             service.setKubernetesNamespace(namespace.get());
+        }
+        if (labelKey.isPresent() && labelValue.isPresent()) {
+        	service.addToClusterLabels(labelKey.get(), labelValue.get());
         }
         return service;
     }
