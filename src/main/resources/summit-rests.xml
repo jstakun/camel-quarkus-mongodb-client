@@ -6,14 +6,7 @@
             <param dataType="string" description="The name of the user store collection" name="cid" type="path"/>
             <to uri="direct:registerUser"/>
         </post>
-        <post id="getTopLabels" path="/v1/labels/stats" produces="application/json">
-            <description>Get current top labels score</description>
-            <to uri="direct:generateLabelsStatsInstant"/>
-        </post>
-        <get id="getTopLabelsFromDB" path="/v1/labels/stats" produces="application/json">
-            <description>Get saved top labels score</description>
-            <to uri="direct:getTopLabels"/>
-        </get>
+
         <post id="getTopUsers" path="/v1/users/stats" produces="application/json">
             <description>Get current top users score</description>
             <to uri="direct:generateUsersStatsInstant"/>
@@ -22,10 +15,26 @@
             <description>Get saved top users score</description>
             <to uri="direct:getTopUsers"/>
         </get>
+        
+        <post id="getTopLabels" path="/v1/labels/stats" produces="application/json">
+            <description>Get current top labels score</description>
+            <to uri="direct:generateLabelsStatsInstant"/>
+        </post>
+        <get id="getTopLabelsFromDB" path="/v1/labels/stats" produces="application/json">
+            <description>Get saved top labels score</description>
+            <to uri="direct:getTopLabels"/>
+        </get>
+        
         <get id="getLabelsByUser" path="/v1/labels/{uid}" produces="application/json">
 			<description>Get current labels by user score</description>
             <param dataType="string" description="User Id" name="uid" type="path"/>
             <to uri="direct:getLabelsByUser"/>
         </get>
+
+         <get id="startGeneretingStats" path="/v1/stats" produces="application/json">
+            <description>Start automatically generating user and label scores</description>
+            <to uri="direct:startGeneratingStats"/>
+        </get>
+        
     </rest>
 </rests>

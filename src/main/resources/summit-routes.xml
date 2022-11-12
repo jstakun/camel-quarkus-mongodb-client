@@ -54,6 +54,7 @@
             </doCatch>
         </doTry>   
     </route>
+    
     <route id="Get top labels">
         <from uri="direct:getTopLabels"/>
         <doTry>
@@ -73,6 +74,7 @@
             </doCatch>
         </doTry>    
     </route>
+    
     <route id="Get top users">
         <from uri="direct:getTopUsers"/>
         <doTry>
@@ -92,6 +94,7 @@
             </doCatch>
         </doTry>    
     </route> 
+    
     <route id="Get labels by users">
         <from uri="direct:getLabelsByUser"/>
         <doTry>
@@ -111,7 +114,16 @@
             </doCatch>
         </doTry>        
     </route>    
-    <route id="Generate users stats">
+    
+    <route id="Start generating stats">
+       <from uri="direct:startGeneratingStats"/>
+       <to uri="controlbus:route?routeId=GenerateUsersStats&amp;action=start" />
+       <to uri="controlbus:route?routeId=GenerateLabelsStats&amp;action=start" />
+        <setBody>
+          	<simple>{"status":"ok"}</simple>
+        </setBody>
+    </route>    
+    <route id="GenerateUsersStats" autoStartup="false">
        <from uri="master:{{app.namespace}}:timer://generate-users-stats?period={{app.user.stats.period}}"/>
        <to uri="direct:generateUsersStats"/>
     </route>
@@ -152,7 +164,8 @@
             </doCatch>
         </doTry>    
     </route>
-    <route id="Generate labels stats">
+    
+    <route id="GenerateLabelsStats" autoStartup="false">
        <from uri="master:{{app.namespace}}:timer://generate-labels-stats?period={{app.label.stats.period}}"/>
        <to uri="direct:generateLabelsStats"/>
     </route>
