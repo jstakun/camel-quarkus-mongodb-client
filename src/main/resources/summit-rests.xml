@@ -1,0 +1,31 @@
+<rests xmlns="http://camel.apache.org/schema/spring"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://camel.apache.org/schema/spring https://camel.apache.org/schema/spring/camel-spring-3.18.0.xsd">
+    <rest id="rh-summit" path="/api">
+        <post id="registerUser" path="/v1/register/{cid}" consumes="application/json" >
+            <description>Register or login user</description>
+            <param dataType="string" description="The name of the user store collection" name="cid" type="path"/>
+            <to uri="direct:registerUser"/>
+        </post>
+        <post id="getTopLabels" path="/v1/labels/stats" produces="application/json">
+            <description>Get current top labels score</description>
+            <to uri="direct:generateLabelsStatsInstant"/>
+        </post>
+        <get id="getTopLabelsFromDB" path="/v1/labels/stats" produces="application/json">
+            <description>Get saved top labels score</description>
+            <to uri="direct:getTopLabels"/>
+        </get>
+        <post id="getTopUsers" path="/v1/users/stats" produces="application/json">
+            <description>Get current top users score</description>
+            <to uri="direct:generateUsersStatsInstant"/>
+        </post>
+        <get id="getTopUsersFromDB" path="/v1/users/stats" produces="application/json">
+            <description>Get saved top users score</description>
+            <to uri="direct:getTopUsers"/>
+        </get>
+        <get id="getLabelsByUser" path="/v1/labels/{uid}" produces="application/json">
+			<description>Get current labels by user score</description>
+            <param dataType="string" description="User Id" name="uid" type="path"/>
+            <to uri="direct:getLabelsByUser"/>
+        </get>
+    </rest>
+</rests>

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes id="RHSummit" xmlns="http://camel.apache.org/schema/spring"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://camel.apache.org/schema/spring https://camel.apache.org/schema/spring/camel-spring-3.18.0.xsd">
+    <route id="Register user">
+        <from uri="direct:registerUser"/>
+        <doTry>
+        	<unmarshal>
+            	<json id="json-re" library="Jackson" unmarshalType="org.redhat.Registration"/>
+        	</unmarshal>
+        	<validate>
+            	<simple>${body.email} != null &amp;&amp; ${body.email.length} > 0</simple>
+        	</validate>
+        	<validate>
+            	<simple>${body.nick} != null &amp;&amp; ${body.nick.length} > 0</simple>
+        	</validate>
+        	<setHeader name="x-redhat-email">
+            	<simple>${body.email.trim()}</simple>
+        	</setHeader>
+        	<setHeader name="x-redhat-nick">
+            	<simple>${body.nick.trim()}</simple>
+        	</setHeader>
+        	<setBody>
+            	 <simple>{"email": { $regex: /${header.x-redhat-email}/i }}</simple>
+        	</setBody>
+        	<recipientList>
+            	 <simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findOneByQuery</simple>
+        	</recipientList>
+        	<choice>
+            	 <when>
+             		<simple>${header.CamelMongoDbResultTotalSize} == 1</simple>
+             		<process ref="RegistrationProcessor"/>
+             		<choice>
+             			<when>
+             		    	<simple>${header.CamelHttpResponseCode} == 200</simple>
+             				<to uri="direct:insertRecord"/>
+             				<setBody>
+            					<simple>{"id": "${header.CamelMongoOid}"}</simple>
+        					</setBody>
+             			</when>
+             		</choice>	
+        		</when>	
+            	<otherwise>
+		        	<setHeader name="CamelHttpResponseCode">
+        		    	<constant>404</constant>
+        			</setHeader>
+        			<log loggingLevel="ERROR" message="Email --${header.x-redhat-email}-- not found!"/>
+             	</otherwise>			  
+        	</choice>
+        	<removeHeaders pattern="x-redhat*"/>	
+        	<removeHeader name="cid"/>
+        	<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>   
+    </route>
+    <route id="Get top labels">
+        <from uri="direct:getTopLabels"/>
+        <doTry>
+            <setBody>
+ 				<simple>labels</simple>           		
+            </setBody> 
+            <recipientList>
+            	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection={{app.mongodb.default.stats.collection}}&amp;operation=findById</simple>
+        	</recipientList>
+            <setBody>
+            	<simple>${body.get("stats")}</simple>
+            </setBody>
+            <to uri="direct:processOutput"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
+    </route>
+    <route id="Get top users">
+        <from uri="direct:getTopUsers"/>
+        <doTry>
+            <setBody>
+ 				<simple>users</simple>           		
+            </setBody> 
+            <recipientList>
+            	<simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection={{app.mongodb.default.stats.collection}}&amp;operation=findById</simple>
+        	</recipientList>
+            <setBody>
+            	<simple>${body.get("stats")}</simple>
+            </setBody>
+            <to uri="direct:processOutput"/>
+            <doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
+    </route> 
+    <route id="Get labels by users">
+        <from uri="direct:getLabelsByUser"/>
+        <doTry>
+            <setHeader name="cid">
+ 				<simple>{{app.mongodb.default.collection}}</simple>           		
+            </setHeader>
+            <setHeader name="default">
+ 				<simple>{"_id": "${header.uid}", "labels":[], "total": 0, "sum": 0}</simple>           		
+            </setHeader> 
+            <setBody>
+        	    <simple>[{ "$match": { "type": "response", "uid": "${header.uid}" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$content.detections.label", "count": { $sum: 1 } } }, { "$sort" : { count : -1 } }, { "$group": { "_id": "${header.uid}", labels: { $push: "$$ROOT" } } }, { $addFields: { total : { $size: "$labels" },  sum: { $sum: "$labels.count" } } }]</simple>
+        	</setBody>
+         	<to uri="direct:aggregateFromCache"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>        
+    </route>    
+    <route id="Generate users stats">
+       <from uri="master:{{app.namespace}}:timer://generate-users-stats?period={{app.user.stats.period}}"/>
+       <to uri="direct:generateUsersStats"/>
+    </route>
+    <route id="Generate users stats instant">
+		<from uri="direct:generateUsersStatsInstant"/>
+		<doTry>    
+		    <to uri="direct:generateUsersStats"/>
+            <to uri="direct:getTopUsers"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
+	</route>
+    <route id="Generate users stats internal">
+       <from uri="direct:generateUsersStats"/>   
+       <doTry>
+            <setHeader name="cid">
+ 				<simple>{{app.mongodb.default.collection}}</simple>           		
+            </setHeader> 
+            <setHeader name="CamelHttpUri">
+ 				<simple>/generate-users-stats</simple>           		
+            </setHeader>   
+            <setBody>
+                <simple>[{ "$match": { "type": "response", "$expr": { "$eq": [ { "$strLenCP":"$uid" }, 24 ] } } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$uid", labels: {$addToSet: "$content.detections.label"} } }, { "$project": { "_id" : 1, count: { "$size": "$labels" } } }, { "$sort" : { count : -1 } }, { $limit : {{app.user.stats.limit}} }, { "$lookup": { from: "users", let: { "userId": { "$toObjectId": "$_id" } }, pipeline: [ { $match: { $expr: { $eq: [ "$_id", "$$userId" ] } } } ], as: "user" } }, { "$project": { "_id" : 1, count: 1, "nick" :  { $first: "$user.nick" }, "email" :  { $first: "$user.email" } } }, { "$project": { "_id" : 1, count: 1, "nick": { $ifNull: [ "$nick", "unknown" ] }, "email": { $ifNull: [ "$email", "unknown" ] } } }]</simple>
+        	</setBody>
+         	<to uri="direct:aggregateFromCache"/>
+            <setBody>
+         	    <simple>{"_id": "users", "stats": ${body}}</simple>
+            </setBody>	    
+            <setHeader name="cid">
+ 				<simple>{{app.mongodb.default.stats.collection}}</simple>           		
+            </setHeader>
+            <to uri="direct:putToCache"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
+    </route>
+    <route id="Generate labels stats">
+       <from uri="master:{{app.namespace}}:timer://generate-labels-stats?period={{app.label.stats.period}}"/>
+       <to uri="direct:generateLabelsStats"/>
+    </route>
+    <route id="Generate labels stats instant">
+		<from uri="direct:generateLabelsStatsInstant"/>
+		<doTry>    
+		    <to uri="direct:generateLabelsStats"/>
+            <to uri="direct:getTopLabels"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
+	</route>    
+    <route id="Generate labels stats internal">
+       <from uri="direct:generateLabelsStats"/>   
+       <doTry>
+            <setHeader name="cid">
+ 				<simple>{{app.mongodb.default.collection}}</simple>           		
+            </setHeader>
+            <setHeader name="CamelHttpUri">
+ 				<simple>/generate-labels-stats</simple>           		
+            </setHeader>   
+            <setBody>
+        		<simple>[{ "$match": { "type": "response" } }, { "$unwind": "$content.detections" }, { "$match": { "content.detections.score": { $gt: {{app.recognition.percent}} } } }, { "$group": { "_id": "$content.detections.label", "total": { $sum: 1 } } }, { "$sort" : { total : -1 } }, { $limit : {{app.label.stats.limit}} }]</simple>
+        	</setBody>
+         	<to uri="direct:aggregateFromCache"/>
+            <setBody>
+         	    <simple>{"_id": "labels", "stats": ${body}}</simple>
+            </setBody>	    
+            <setHeader name="cid">
+ 				<simple>{{app.mongodb.default.stats.collection}}</simple>           		
+            </setHeader>
+            <to uri="direct:putToCache"/>
+    		<doCatch>
+            	 <exception>java.lang.Exception</exception>
+                 <to uri="direct:logError"/>
+            </doCatch>
+        </doTry>    
+    </route>    	
+</routes>
