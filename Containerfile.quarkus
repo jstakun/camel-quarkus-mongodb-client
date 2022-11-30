@@ -1,6 +1,6 @@
-FROM quay.io/jstakun/ubi-micro-quarkus:latest
-MAINTAINER Jaroslaw Stakun jstakun@redhat.com
-LABEL quarkus-version=2.12.1.Final \
+FROM quay.io/quarkus/quarkus-micro-image:2.0
+LABEL maintainer="Jaroslaw Stakun jstakun@redhat.com" \
+      quarkus-version=2.14.2.Final \
       camel.version=3.18.1
 COPY ./target/*-runner /application
 RUN chgrp 0 /application && chmod 110 /application

@@ -179,7 +179,7 @@
         <marshal>
             <json id="json-po" library="Jackson"/>
         </marshal>
-        <choice> 
+        <!--choice> 
         	<when>
             	<simple>${headers.accept-encoding} contains 'gzip'</simple>
 				<marshal>
@@ -193,6 +193,7 @@
 			<otherwise> 
         		<removeHeaders pattern="*"/>
 			</otherwise>
-		</choice>
+		</choice-->
+		<removeHeaders pattern="*"/>
     </route>
 </routes>
