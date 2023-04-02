@@ -4,31 +4,31 @@
     <route id="Register user">
         <from uri="direct:registerUser"/>
         <doTry>
-        	<unmarshal>
+            <unmarshal>
             	<json id="json-re" library="Jackson" unmarshalType="org.redhat.Registration"/>
         	</unmarshal>
-        	<validate>
+            <validate>
             	<simple>${body.email} != null &amp;&amp; ${body.email.length} > 0</simple>
         	</validate>
         	<validate>
             	<simple>${body.nick} != null &amp;&amp; ${body.nick.length} > 0</simple>
         	</validate>
-        	<setHeader name="x-redhat-email">
+            <setHeader name="x-redhat-email">
             	<simple>${body.email.trim()}</simple>
         	</setHeader>
         	<setHeader name="x-redhat-nick">
             	<simple>${body.nick.trim()}</simple>
         	</setHeader>
-        	<setBody>
+            <setBody>
             	 <simple>{"email": { $regex: /${header.x-redhat-email}/i }}</simple>
         	</setBody>
-        	<recipientList>
+            <recipientList>
             	 <simple>mongodb:camelMongoClient?database={{quarkus.mongodb.database}}&amp;collection=${header.cid}&amp;operation=findOneByQuery</simple>
         	</recipientList>
-        	<choice>
+            <choice>
             	 <when>
-             		<simple>${header.CamelMongoDbResultTotalSize} == 1</simple>
-             		<process ref="RegistrationProcessor"/>
+             		<simple>${header.CamelMongoDbResultTotalSize} == 1 || {{app.registration.self}} == true</simple>
+                    <process ref="RegistrationProcessor"/>
              		<choice>
              			<when>
              		    	<simple>${header.CamelHttpResponseCode} == 200</simple>
@@ -40,10 +40,10 @@
              		</choice>	
         		</when>	
             	<otherwise>
-		        	<setHeader name="CamelHttpResponseCode">
+                    <setHeader name="CamelHttpResponseCode">
         		    	<constant>404</constant>
         			</setHeader>
-        			<log loggingLevel="ERROR" message="Email --${header.x-redhat-email}-- not found!"/>
+        			<log loggingLevel="ERROR" message="User -- ${header[x-redhat-email]} -- not found!"/>
              	</otherwise>			  
         	</choice>
         	<removeHeaders pattern="x-redhat*"/>	
