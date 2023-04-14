@@ -1,7 +1,7 @@
 FROM quay.io/quarkus/quarkus-micro-image:2.0
 LABEL maintainer="Jaroslaw Stakun jstakun@redhat.com" \
-      quarkus-version=2.16.5.Final \
-      camel.version=3.20.1
+      quarkus-version=2.14.3.Final \
+      camel.version=3.19.0
 COPY ./target/*-runner /application
 RUN chgrp 0 /application && chmod 110 /application
 USER 1001
